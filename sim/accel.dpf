@@ -6,26 +6,27 @@ work_dir: .
 design_root_dir: ..
 simulations:
   - name: elab_ic_top
-    options: '-top work.tb_ic_top -genimage image -separate-unit-scopes +acc+b -L gowin'
+    options: >-
+      -top work.tb_ic_top -genimage image -separate-unit-scopes  -uvm 1.2 +acc+b
+      -L gowin
   - name: run
     options: '-image image -waves ic.mxd'
 source_files:
   - language: verilog
-    path: ../icache/ic_pkg.sv
+    path: ../rtl/icache/icache.f
+    file_list: relative-to-file
   - language: verilog
-    path: ../lib/prim_sim.v
+    path: $GOWIN/prim_sim.v
     library_name: gowin
   - language: verilog
-    path: ../icache/ic_top.sv
+    path: ../tb/icache/tb_ic_top.sv
   - language: verilog
-    path: ../icache/ic_data_ram.sv
+    path: ../tb/icache/tb_icache.f
+    options: '-uvm 1.2'
+    file_list: relative-to-file
   - language: verilog
-    path: ../icache/ic_tag_ram.sv
+    path: ../rtl/top/dram_arb.sv
   - language: verilog
-    path: ../icache/ic_lru_ram.sv
-  - language: verilog
-    path: ../icache/ic_ctrl.sv
-  - language: verilog
-    path: ../tb/tb_ic_top.sv
+    path: ../tb/env/gowin_ddr_model.sv
 library_search_paths:
   - $STD_LIBS/ieee93

@@ -163,13 +163,17 @@ assign rd_line = fetch_line_q1;
 assign rd_word_even = fetch_word_even_q1;
 assign rd_word_odd = fetch_word_odd_q1;
 
+logic       re_data_q;
+
 // Final instruction assembly
 always @(posedge clk) begin
     if (!rst_n) begin
         fetch_data <= 0;
         fetch_valid <= 0;
+        re_data_q <= 0;
     end else begin
-        fetch_valid <= |tag_hit;
+        fetch_valid <= re_data_q;
+        re_data_q <= re_data;
         if (req_odd_q1)
             fetch_data <= {rd_data_even,rd_data_odd};
         else
