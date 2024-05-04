@@ -1,7 +1,8 @@
 // Testbench for ic_top
 module tb_ic_top;
 
-//import uvm_pkg::*;
+import uvm_pkg::*;
+import tb_icache_pkg::*;
 
 wire            clk;
 reg             rst_n;
@@ -43,35 +44,16 @@ dram_arb arb(
 gowin_ddr_model ddr_model(
     .*);
 
-task fetch(reg [31:0] addr);
-    fetch_if.fetch_addr <= addr[26:1];
-    fetch_if.fetch_en <= 1;
-    @(posedge clk);
-    fetch_if.fetch_en <= 0;
-endtask
-
 initial begin
     rst_n = 1'b0;
     fetch_if.fetch_en = 1'b0;
     repeat (4) @(posedge clk);
     rst_n <= 1'b1;
-    
-    // Wait for init done
-    repeat (300) @(posedge clk);
+end
 
-    // Try a fetch
-    fetch('h1234567);
-
-    // Wait for response
-    repeat (100) @(posedge clk);
-
-    // Try the fetch again
-    fetch('h1234567);
-
-    // Wait for response
-    repeat (100) @(posedge clk);
-
-    $finish;
+initial begin
+    uvm_config_db#(virtual ic_fetch_if)::set(null, "*", "vif", fetch_if);
+    run_test();
 end
 
 endmodule

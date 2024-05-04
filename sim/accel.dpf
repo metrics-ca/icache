@@ -8,9 +8,9 @@ simulations:
   - name: elab_ic_top
     options: >-
       -top work.tb_ic_top -genimage image -separate-unit-scopes  -uvm 1.2 +acc+b
-      -L gowin
+      -L gowin -j 8
   - name: run
-    options: '-image image -waves ic.mxd'
+    options: '-image image -uvm 1.2 -waves ic.mxd +UVM_TESTNAME=ic_base_test'
 source_files:
   - language: verilog
     path: ../rtl/icache/icache.f
