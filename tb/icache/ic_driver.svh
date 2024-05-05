@@ -1,7 +1,10 @@
 class ic_driver extends uvm_driver#(ic_xact);
     `uvm_component_utils(ic_driver)
 
+    uvm_seq_item_pull_port#(ic_xact, ic_xact) seq_item_ports[8];
     virtual ic_fetch_if     vif;
+    bit [2:0]               slot, reply_slot;
+    ic_xact                 xacts[8];
 
     function new(string name, uvm_component parent);
         super.new(name, parent);
@@ -9,6 +12,8 @@ class ic_driver extends uvm_driver#(ic_xact);
 
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
+        foreach (seq_item_ports[i])
+            seq_item_ports[i] = new($sformatf("port%0d", i), this);
         assert(uvm_config_db#(virtual ic_fetch_if)::get(this, "", "vif", vif));
     endfunction
 
@@ -17,13 +22,24 @@ class ic_driver extends uvm_driver#(ic_xact);
         fork
             begin 
                 forever @(posedge vif.clk) begin
-                    seq_item_port.try_next_item(req);
+                    ++slot;
+                    req = xacts[slot];
+                    if (!req) begin
+                        seq_item_ports[slot].try_next_item(req);
+                        xacts[slot] = req;
+                    end
                     if (req) begin
-                        vif.fetch_addr <= req.addr;
+                        vif.fetch_addr <= xacts[slot].addr;
+                        $display("Initiate transaction slot %0d", slot);
                         vif.fetch_en <= 1;
-                        seq_item_port.item_done();
                     end else begin
                         vif.fetch_en <= 0;
+                    end
+                    reply_slot = slot - 3;
+                    if (vif.fetch_valid) begin
+                        $display("Completed transaction slot %0d", reply_slot);
+                        seq_item_ports[reply_slot].item_done(xacts[reply_slot]);
+                        xacts[reply_slot] = null;
                     end
                 end
             end 

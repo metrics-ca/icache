@@ -56,4 +56,9 @@ initial begin
     run_test();
 end
 
+initial begin
+    #100us;
+    $display("Watchdog timeout!");
+    $finish;
+end
 endmodule

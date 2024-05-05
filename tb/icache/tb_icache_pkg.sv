@@ -11,7 +11,9 @@ typedef uvm_sequencer#(ic_xact) ic_sqr_t;
 
 // Envrionment
 `include "ic_env.svh"
+`include "ic_seq_lib.svh"
 `include "ic_base_test.svh"
+`include "ic_single_test.svh"
 
 endpackage
 

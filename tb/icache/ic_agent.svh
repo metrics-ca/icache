@@ -2,7 +2,7 @@ class ic_agent extends uvm_agent;
     `uvm_component_utils(ic_agent)
 
     ic_driver       driver;
-    ic_sqr_t        sqr;
+    ic_sqr_t        sqr[8];
 
     function new(string name, uvm_component parent);
         super.new(name, parent);
@@ -11,11 +11,13 @@ class ic_agent extends uvm_agent;
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
         driver = ic_driver::type_id::create("driver", this);
-        sqr = ic_sqr_t::type_id::create("sequencer", this);
+        foreach (sqr[i])
+            sqr[i] = ic_sqr_t::type_id::create($sformatf("sequencer%0d", i), this);
     endfunction
 
     function void connect_phase(uvm_phase phase);
         super.connect_phase(phase);
-        driver.seq_item_port.connect(sqr.seq_item_export);
+        foreach (sqr[i])
+            driver.seq_item_ports[i].connect(sqr[i].seq_item_export);
     endfunction
 endclass
