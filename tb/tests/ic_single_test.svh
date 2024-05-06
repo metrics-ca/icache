@@ -5,8 +5,8 @@ class ic_single_test extends ic_base_test;
         super.new(name, parent);
     endfunction
 
-    task run_phase(uvm_phase phase);
-        super.run_phase(phase);
+    task main_phase(uvm_phase phase);
+        super.main_phase(phase);
         fork
             begin 
                 ic_single_seq   seq;

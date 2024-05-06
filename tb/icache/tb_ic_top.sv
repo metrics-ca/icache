@@ -15,20 +15,11 @@ reg             mem_ic_valid;
 reg [1:0]       mem_ic_xid;
 reg [127:0]     mem_ic_data;
 
-logic           ddr_calib_done;
-logic [2:0]     ddr_cmd;
-logic           ddr_cmd_en;
-logic [27:0]    ddr_addr;
-logic [127:0]   ddr_wr_data;
-logic [15:0]    ddr_wr_data_mask;
-logic           ddr_wr_data_en;
-logic           ddr_cmd_ready;
-logic [127:0]   ddr_rd_data;
-logic           ddr_rd_data_valid;
-
 assign #5ns clk = (clk === 1'b0);
 
 ic_fetch_if fetch_if(.*);
+dram_ctrl_if dram_if(.*);
+
 ic_top dut(
     .fetch_addr(fetch_if.fetch_addr),
     .fetch_en(fetch_if.fetch_en),
@@ -36,12 +27,33 @@ ic_top dut(
     .fetch_data(fetch_if.fetch_data),
     .*);
 
+assign fetch_if.init_done = dut.u_ctrl.init_done;
+
 dram_arb arb(
     .mem_xxx_xid(mem_ic_xid),
     .mem_xxx_data(mem_ic_data),
+    .ddr_cmd(dram_if.ddr_cmd),
+    .ddr_cmd_en(dram_if.ddr_cmd_en),
+    .ddr_addr(dram_if.ddr_addr),
+    .ddr_wr_data(dram_if.ddr_wr_data),
+    .ddr_wr_data_mask(dram_if.ddr_wr_data_mask),
+    .ddr_wr_data_en(dram_if.ddr_wr_data_en),
+    .ddr_cmd_ready(dram_if.ddr_cmd_ready),
+    .ddr_rd_data(dram_if.ddr_rd_data),
+    .ddr_rd_data_valid(dram_if.ddr_rd_data_valid),
     .*);
 
 gowin_ddr_model ddr_model(
+    .ddr_calib_done(ddr_calib_done),
+    .ddr_cmd(dram_if.ddr_cmd),
+    .ddr_cmd_en(dram_if.ddr_cmd_en),
+    .ddr_addr(dram_if.ddr_addr),
+    .ddr_wr_data(dram_if.ddr_wr_data),
+    .ddr_wr_data_mask(dram_if.ddr_wr_data_mask),
+    .ddr_wr_data_en(dram_if.ddr_wr_data_en),
+    .ddr_cmd_ready(dram_if.ddr_cmd_ready),
+    .ddr_rd_data(dram_if.ddr_rd_data),
+    .ddr_rd_data_valid(dram_if.ddr_rd_data_valid),
     .*);
 
 initial begin
@@ -53,6 +65,7 @@ end
 
 initial begin
     uvm_config_db#(virtual ic_fetch_if)::set(null, "*", "vif", fetch_if);
+    uvm_config_db#(virtual dram_ctrl_if)::set(null, "*", "vif", dram_if);
     run_test();
 end
 

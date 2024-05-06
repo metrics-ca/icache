@@ -12,12 +12,28 @@ class ic_base_test extends uvm_test;
         env = new("env", this);
     endfunction
 
-    task run_phase(uvm_phase phase);
-        super.run_phase(phase);
-        fork
-            begin 
-                uvm_top.print_topology();
-            end
-        join_none
+    task reset_phase(uvm_phase phase);
+        super.reset_phase(phase);
+        fork begin
+            phase.raise_objection(this);
+            uvm_top.print_topology();
+            
+            // Wait until reset deasserted
+            #100;
+
+            // Wait until IC cache controller can accept transactions
+            wait (env.fetch_agent.fetch_if.init_done == 1);
+            phase.drop_objection(this);
+        end join_none
+    endtask
+
+    task shutdown_phase(uvm_phase phase);
+        super.shutdown_phase(phase);
+        phase.raise_objection(this);
+        
+        // To move the waveform off the last transaction
+        #100;
+
+        phase.drop_objection(this);
     endtask
 endclass

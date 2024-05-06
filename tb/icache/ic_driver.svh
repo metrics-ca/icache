@@ -30,16 +30,20 @@ class ic_driver extends uvm_driver#(ic_xact);
                     end
                     if (req) begin
                         vif.fetch_addr <= xacts[slot].addr;
-                        $display("Initiate transaction slot %0d", slot);
                         vif.fetch_en <= 1;
                     end else begin
                         vif.fetch_en <= 0;
                     end
                     reply_slot = slot - 3;
                     if (vif.fetch_valid) begin
-                        $display("Completed transaction slot %0d", reply_slot);
-                        seq_item_ports[reply_slot].item_done(xacts[reply_slot]);
-                        xacts[reply_slot] = null;
+                        req = xacts[reply_slot];
+                        if (req) begin
+                            req.data = vif.fetch_data;
+                            seq_item_ports[reply_slot].item_done(req);
+                            xacts[reply_slot] = null;
+                        end else begin
+                            `uvm_error(get_type_name(), "Fetch asserted valid but no previous related request.");
+                        end
                     end
                 end
             end 
