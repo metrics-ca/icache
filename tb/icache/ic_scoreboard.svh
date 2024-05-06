@@ -25,8 +25,10 @@ class ic_scoreboard extends uvm_scoreboard;
 
         end else if ($cast(ic_item, item)) begin
             addr = ic_item.addr;
-            if (ic_item.hit && shadow[addr] != ic_item.data[15:0])
+            if (ic_item.hit[0] && shadow[addr] != ic_item.data[15:0])
                 `uvm_error(get_type_name(), $sformatf("Data mismatch: expected (DRAM) %04h fetched %04h", shadow[addr], ic_item.data[15:0]));
+            if (ic_item.hit[1] && shadow[addr+1] != ic_item.data[31:16])
+                `uvm_error(get_type_name(), $sformatf("Data mismatch: expected (DRAM) %04h fetched %04h", shadow[addr+1], ic_item.data[31:16]));
         end else begin
             `uvm_error(get_type_name(), "Received strange item.");
         end

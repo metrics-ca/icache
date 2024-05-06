@@ -7,7 +7,7 @@ module ic_top(
     // Fetch interface from CPU
     input [26:1]            fetch_addr,
     input                   fetch_en,
-    output                  fetch_valid,
+    output [1:0]            fetch_valid,
     output [31:0]           fetch_data,
 
     // Interface to memory controller

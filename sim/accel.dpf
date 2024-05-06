@@ -15,6 +15,18 @@ simulations:
     options: '-image image -uvm 1.2 -waves ic.mxd +UVM_TESTNAME=ic_single_test'
   - name: typical_test
     options: '-image image -uvm 1.2 -waves ic.mxd +UVM_TESTNAME=ic_typical_test'
+  - name: typical_test_2
+    options: >-
+      -image image -uvm 1.2 -waves ic.mxd +UVM_TESTNAME=ic_typical_test
+      +threads=2
+  - name: typical_test_3
+    options: >-
+      -image image -uvm 1.2 -waves ic.mxd +UVM_TESTNAME=ic_typical_test
+      +threads=3
+  - name: typical_test_4
+    options: >-
+      -image image -uvm 1.2 -waves ic.mxd +UVM_TESTNAME=ic_typical_test
+      +threads=4 +UVM_MAX_QUIT_COUNT=5
 source_files:
   - language: verilog
     path: ../rtl/icache/icache.f

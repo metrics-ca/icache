@@ -9,7 +9,7 @@ module ic_ctrl(
     // Fetch interface from CPU
     input [26:1]            fetch_addr,
     input                   fetch_en,
-    output reg              fetch_valid,
+    output reg [1:0]        fetch_valid,
     output reg [31:0]       fetch_data,
 
     // Interface to DRAM controller
@@ -172,7 +172,8 @@ always @(posedge clk) begin
         fetch_valid <= 0;
         re_data_q <= 0;
     end else begin
-        fetch_valid <= re_data_q;
+        fetch_valid[0] <= re_data_q;
+        fetch_valid[1] <= re_data_q & ~straddle_q1;
         re_data_q <= re_data;
         if (req_odd_q1)
             fetch_data <= {rd_data_even,rd_data_odd};

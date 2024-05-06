@@ -29,6 +29,7 @@ class ic_typical_seq extends uvm_sequence#(ic_xact);
         init_req = ic_xact::type_id::create("init_req");
         void'(init_req.randomize());
 
+        `uvm_info(get_type_name(), $sformatf("fetching range: %0h - %0h", init_req.addr * 2, (init_req.addr + n_insns - 1) * 2), UVM_LOW);
         for (int i = 0; i < n_insns; i++) begin
             req = ic_xact::type_id::create("req");
             req.addr = init_req.addr;

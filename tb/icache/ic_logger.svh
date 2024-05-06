@@ -11,10 +11,15 @@ class ic_logger extends uvm_component;
     endfunction
 
     function void write(ic_xact item);
-        if (item.hit)
-            $fdisplay(fd, "@%0t: %h: hit, data = %h", $time, item.addr * 2, item.data);
-        else
+        if (|item.hit) begin
+            $fwrite(fd, "@%0t: %h: hit, data = ", $time, item.addr * 2);
+            if (item.hit == 2'b11)
+                $fdisplay(fd, "%x", item.data);
+            else
+                $fdisplay(fd, "----%x", item.data[15:0]);
+        end else begin
             $fdisplay(fd, "@%0t: %h: miss", $time, item.addr * 2);
+        end
     endfunction
 endclass
             
