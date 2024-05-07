@@ -27,13 +27,14 @@ simulations:
     options: >-
       -image image -uvm 1.2 -waves ic.mxd +UVM_TESTNAME=ic_typical_test
       +threads=4 +trans=100 +UVM_MAX_QUIT_COUNT=5
+  - name: typical_test_8
+    options: >-
+      -image image -uvm 1.2 -waves ic.mxd +UVM_TESTNAME=ic_typical_test
+      +threads=8 +trans=100 +UVM_MAX_QUIT_COUNT=5
 source_files:
   - language: verilog
     path: ../rtl/icache/icache.f
     file_list: relative-to-file
-  - language: verilog
-    path: $GOWIN/prim_sim.v
-    library_name: gowin
   - language: verilog
     path: ../tb/dram_ctrl/dram_ctrl.f
     options: '-uvm 1.2'

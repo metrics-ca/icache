@@ -18,24 +18,12 @@ module ic_data_ram(
     input               wr_en
 );
 
-case (IMPL)
-BEHAVIORAL: begin
-
-    ic_fill_t       d_ram[WAYS * LINES];
-
-    always @(posedge clk)
-        if (rst_n) begin
-            if (wr_en)
-                d_ram[{wr_line,wr_way}] <= wr_data;
-            if (rd_en)
-                rd_data <= d_ram[{rd_line,rd_way}][rd_word];
-        end
-
-end
-GOWIN: begin
-
+// Common logic: read/write collision.
+// Most embedded RAMs don't support read+write to the same address in the same clock.
+// If this happens, we want the write data to be forwarded to the reader.
 wire coll = (rd_line == wr_line) && rd_en && wr_en;
 reg coll_q;
+
 ic_fill_t  wt_data;
 reg [15:0] int_rd_data;
 ic_waddr_t rd_word_q;
@@ -48,6 +36,27 @@ always @(posedge clk)
         coll_q <= coll;
         rd_word_q <= rd_word;
     end
+
+assign rd_data = coll_q ? wt_data[rd_word_q] : int_rd_data;
+
+case (IMPL)
+BEHAVIORAL: begin
+
+ic_fill_t               d_ram[WAYS * LINES];
+
+always @(posedge clk)
+    if (!rst_n)
+        wt_data <= '0;
+    else begin
+        wt_data <= wr_data;
+        if (wr_en)
+            d_ram[{wr_line,wr_way}] <= wr_data;
+        if (rd_en)
+            int_rd_data <= d_ram[{rd_line,rd_way}][rd_word];
+    end
+
+end
+GOWIN: begin
 
     // Write port: 1K x 64
     // Read port: 4K x 16
@@ -87,8 +96,6 @@ always @(posedge clk)
             .DOB(int_rd_data[i*4+:4])
         );
     end
-
-assign rd_data = coll_q ? wt_data[rd_word_q] : int_rd_data;
 
 end
 default: begin

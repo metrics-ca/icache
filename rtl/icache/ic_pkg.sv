@@ -36,6 +36,6 @@ typedef struct packed {
 
 typedef enum { BEHAVIORAL, GOWIN } eImplementation;
 
-localparam eImplementation IMPL = GOWIN;
+localparam eImplementation IMPL = BEHAVIORAL;
 
 endpackage
