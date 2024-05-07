@@ -55,7 +55,8 @@ always @(posedge clk)
         if (eff_push) begin
             fifo[wr_ptr] <= {wr_init,wr_xid};
             wr_ptr <= next_wr_ptr;
-        end else if (eff_pop) begin
+        end
+        if (eff_pop) begin
             rd_ptr <= next_rd_ptr;
         end
         if (eff_push) begin

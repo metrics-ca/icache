@@ -12,6 +12,18 @@ class ic_scoreboard extends uvm_scoreboard;
         fetch_ap = new("fetch_ap", this);
     endfunction
 
+    function void check_ic(int addr, bit [15:0] actual);
+        bit [15:0]  expected;
+        
+        if (!shadow.exists(addr)) begin
+            `uvm_error(get_type_name(), $sformatf("Address %0h not read from DRAM yet.", addr));
+        end else begin
+            expected = shadow[addr];
+            if (expected != actual)
+                `uvm_error(get_type_name(), $sformatf("Data mismatch: address %0h: expected (DRAM) %04h fetched %04h", addr * 2, expected, actual));
+        end
+    endfunction
+
     function void write(uvm_object item);
         ic_xact         ic_item;
         dram_ctrl_xact  dram_item;
@@ -25,10 +37,10 @@ class ic_scoreboard extends uvm_scoreboard;
 
         end else if ($cast(ic_item, item)) begin
             addr = ic_item.addr;
-            if (ic_item.hit[0] && shadow[addr] != ic_item.data[15:0])
-                `uvm_error(get_type_name(), $sformatf("Data mismatch: expected (DRAM) %04h fetched %04h", shadow[addr], ic_item.data[15:0]));
-            if (ic_item.hit[1] && shadow[addr+1] != ic_item.data[31:16])
-                `uvm_error(get_type_name(), $sformatf("Data mismatch: expected (DRAM) %04h fetched %04h", shadow[addr+1], ic_item.data[31:16]));
+            if (ic_item.hit[0])
+                check_ic(addr, ic_item.data[15:0]);
+            if (ic_item.hit[1])
+                check_ic(addr+1, ic_item.data[31:16]);
         end else begin
             `uvm_error(get_type_name(), "Received strange item.");
         end

@@ -93,8 +93,8 @@ assign raddr_tag = fetch_line;
 
 // Tag compare
 reg             tag_cmp_en_q1;
-reg             straddle_q1;
-reg             req_odd_q1;
+reg             straddle_q1, straddle_q2;
+reg             req_odd_q1, req_odd_q2, req_odd_q3;
 ic_tag_t        fetch_tag_q1;
 ic_line_t       fetch_line_q1;
 ic_waddr_t      fetch_word_even_q1, fetch_word_odd_q1;
@@ -107,7 +107,10 @@ always @(posedge clk)
         fetch_word_even_q1 <= 0;
         fetch_word_odd_q1 <= 0;
         straddle_q1 <= 0;
+        straddle_q2 <= 0;
         req_odd_q1 <= 0;
+        req_odd_q2 <= 0;
+        req_odd_q3 <= 0;
     end else begin
         tag_cmp_en_q1 <= fetch_en & init_done;
         fetch_tag_q1 <= fetch_tag;
@@ -115,7 +118,10 @@ always @(posedge clk)
         fetch_word_even_q1 <= fetch_word_even;
         fetch_word_odd_q1 <= fetch_word_odd;
         straddle_q1 <= straddle;
+        straddle_q2 <= straddle_q1;
         req_odd_q1 <= fetch_addr[1];
+        req_odd_q2 <= req_odd_q1;
+        req_odd_q3 <= req_odd_q2;
     end
 
 reg [WAYS-1:0] tag_hit;
@@ -132,7 +138,6 @@ wire [26:4]     miss_addr = {fetch_tag_q1,fetch_line_q1};
 
 reg             nxt_tag_wb_en;
 ic_line_t       nxt_tag_wb_line;
-ic_way_t        nxt_tag_wb_way;
 ic_tag_entry_t  nxt_tag_wb_data;
 reg [127:0]     mem_ic_data_q1;
 
@@ -173,9 +178,9 @@ always @(posedge clk) begin
         re_data_q <= 0;
     end else begin
         fetch_valid[0] <= re_data_q;
-        fetch_valid[1] <= re_data_q & ~straddle_q1;
+        fetch_valid[1] <= re_data_q & ~straddle_q2;
         re_data_q <= re_data;
-        if (req_odd_q1)
+        if (req_odd_q2)
             fetch_data <= {rd_data_even,rd_data_odd};
         else
             fetch_data <= {rd_data_odd,rd_data_even};

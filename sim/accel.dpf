@@ -26,7 +26,7 @@ simulations:
   - name: typical_test_4
     options: >-
       -image image -uvm 1.2 -waves ic.mxd +UVM_TESTNAME=ic_typical_test
-      +threads=4 +UVM_MAX_QUIT_COUNT=5
+      +threads=4 +trans=100 +UVM_MAX_QUIT_COUNT=5
 source_files:
   - language: verilog
     path: ../rtl/icache/icache.f

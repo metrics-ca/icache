@@ -5,6 +5,16 @@ class ic_driver extends uvm_driver#(ic_xact);
     virtual ic_fetch_if     vif;
     bit [2:0]               slot, reply_slot;
     ic_xact                 xacts[8];
+    bit [31:0]              data;
+    bit [1:0]               hit;
+    
+    // Latency from driving to sampling result:
+    // cycle 0: drive fetch_en (NBA)
+    // cycle 1: DUT sees fetch_en, issues read from tag RAM
+    // cycle 2: DUT issues read from data RAM
+    // cycle 3: DUT reformats result, drivces fetch_data (NBA)
+    // cycle 4: driver sees data
+    const int               LATENCY = 4;
 
     function new(string name, uvm_component parent);
         super.new(name, parent);
@@ -22,6 +32,10 @@ class ic_driver extends uvm_driver#(ic_xact);
         fork
             begin 
                 forever @(posedge vif.clk) begin
+                    // try_next_item() will nudge you into the NBA region.
+                    // Sample anything required now.
+                    data = vif.fetch_data;
+                    hit = vif.fetch_valid;
                     ++slot;
                     req = xacts[slot];
                     if (!req) begin
@@ -31,24 +45,21 @@ class ic_driver extends uvm_driver#(ic_xact);
                     if (req) begin
                         vif.fetch_addr <= xacts[slot].addr;
                         vif.fetch_en <= 1;
-$display("%0t: issued %p from %h", $time, xacts[slot], xacts[slot].addr);
                     end else begin
                         vif.fetch_en <= 0;
                     end
-                    reply_slot = slot - 3;
-$display("%0t: fetch_valid=%b", $time, vif.fetch_valid);
-                    if (|vif.fetch_valid) begin
+                    reply_slot = slot - LATENCY;
+                    if (|hit) begin
                         req = xacts[reply_slot];
                         if (req) begin
-                            req.data = vif.fetch_data;
-                            req.hit = vif.fetch_valid;
+                            req.data = data;
+                            req.hit = hit;
                             seq_item_ports[reply_slot].item_done(req);
                             xacts[reply_slot] = null;
                         end else begin
                             `uvm_error(get_type_name(), "Fetch asserted valid but no previous related request.");
                         end
                     end
-$display("slot=%0d reply=%0d slots=%p", slot, reply_slot, xacts);
                 end
             end 
         join_none
