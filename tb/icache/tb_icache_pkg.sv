@@ -9,6 +9,7 @@ import tb_dram_ctrl_pkg::*;
 `include "ic_driver.svh"
 typedef uvm_sequencer#(ic_xact) ic_sqr_t;
 `include "ic_monitor.svh"
+`include "ic_coverage.svh"
 `include "ic_logger.svh"
 `include "ic_agent.svh"
 

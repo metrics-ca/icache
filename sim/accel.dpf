@@ -8,7 +8,7 @@ simulations:
   - name: elab_ic_top
     options: >-
       -top work.tb_ic_top -genimage image -separate-unit-scopes  -uvm 1.2 +acc+b
-      -L gowin -j 8
+      -L gowin -j 8 -code-cov block
   - name: stress_test
     options: '-image image -uvm 1.2 -waves ic.mxd +UVM_TESTNAME=ic_stress_test'
   - name: single_test
@@ -47,5 +47,7 @@ source_files:
     file_list: relative-to-file
   - language: verilog
     path: ../rtl/top/dram_arb.sv
+  - language: verilog
+    path: ../tb/icache/ic_ctrl_cover.sv
 library_search_paths:
   - $STD_LIBS/ieee93

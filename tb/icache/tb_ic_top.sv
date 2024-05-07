@@ -27,6 +27,8 @@ ic_top dut(
     .fetch_data(fetch_if.fetch_data),
     .*);
 
+bind ic_ctrl ic_ctrl_cover u_cover(.*);
+
 assign fetch_if.init_done = dut.u_ctrl.init_done;
 
 dram_arb arb(
