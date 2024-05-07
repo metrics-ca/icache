@@ -1,0 +1,4 @@
+path tb_ic_top +b
+
+# UVM macros expand to crazy amounts of code
+#path $pkgs.tb_icache_pkg +b
