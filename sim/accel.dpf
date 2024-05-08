@@ -8,7 +8,7 @@ simulations:
   - name: elab_ic_top
     options: >-
       -top work.tb_ic_top -genimage image -separate-unit-scopes  -uvm 1.2 +acc+b
-      -L gowin -j 8 -code-cov block
+      -L gowin -j 8
   - name: stress_test
     options: '-image image -uvm 1.2 -waves ic.mxd +UVM_TESTNAME=ic_stress_test'
   - name: single_test
@@ -26,7 +26,7 @@ simulations:
   - name: typical_test_4
     options: >-
       -image image -uvm 1.2 -waves ic.mxd +UVM_TESTNAME=ic_typical_test
-      +threads=4 +trans=100 +UVM_MAX_QUIT_COUNT=5
+      +threads=4 +trans=100 +UVM_MAX_QUIT_COUNT=5 -sv_seed random
   - name: typical_test_8
     options: >-
       -image image -uvm 1.2 -waves ic.mxd +UVM_TESTNAME=ic_typical_test

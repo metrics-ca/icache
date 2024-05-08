@@ -42,6 +42,21 @@ assign rd_data = coll_q ? wt_data[rd_word_q] : int_rd_data;
 case (IMPL)
 BEHAVIORAL: begin
 
+// Data corruption widget:
+localparam FAIL_PCT = 100;
+logic [63:0]            syndrome = '0;
+bit [5:0]               bad_bit;
+bit [7:0]               bad_line;
+wire [63:0]             eff_syndrome = (rd_line == bad_line) ? syndrome : '0;
+
+initial begin
+    if ($urandom_range(0, 99) < FAIL_PCT) begin
+        bad_bit = $urandom;
+        bad_line = $urandom;
+        syndrome[bad_bit] = 1;
+    end
+end
+
 ic_fill_t               d_ram[WAYS * LINES];
 
 always @(posedge clk)
@@ -50,7 +65,7 @@ always @(posedge clk)
     else begin
         wt_data <= wr_data;
         if (wr_en)
-            d_ram[{wr_line,wr_way}] <= wr_data;
+            d_ram[{wr_line,wr_way}] <= wr_data ^ eff_syndrome;
         if (rd_en)
             int_rd_data <= d_ram[{rd_line,rd_way}][rd_word];
     end
