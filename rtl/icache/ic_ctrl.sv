@@ -87,7 +87,7 @@ always_comb begin
     end
 end
 
-wire   straddle = &fetch_word;
+wire   straddle = &{fetch_word,fetch_addr[1]};
 assign re_tag = {WAYS{fetch_en & init_done}};
 assign raddr_tag = fetch_line;
 
@@ -246,17 +246,20 @@ assign tag_wb_way = rdata_lru[3];
 localparam ic_lru_t LRU_INIT = '{ 3,2,1,0};
 
 // Writes to LRU RAM
+wire    do_lru_wb_update = lru_wb_update_en_q1;
+wire    do_lru_rd_update = lru_rd_update_en_q1 & !miss;
+
 always_comb begin
     if (!init_done) begin
         // Initialization data
         we_lru = 1'b1;
         waddr_lru = init_cnt[LG_LINES-1:0];
         wdata_lru = LRU_INIT;
-    end else if (lru_wb_update_en_q1) begin
+    end else if (do_lru_wb_update) begin
         we_lru = 1;
         waddr_lru = tag_wb_line;
         wdata_lru = lru_wb_update;
-    end else if (lru_rd_update_en_q1 & !miss) begin
+    end else if (do_lru_rd_update) begin
         // Mission mode
         we_lru = 1;
         waddr_lru = fetch_line_q1;

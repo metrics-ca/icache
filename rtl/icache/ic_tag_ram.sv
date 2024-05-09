@@ -15,33 +15,40 @@ module ic_tag_ram(
     input               wr_en
 );
 
+// Common logic: read/write collision.
+// Most embedded RAMs don't support read+write to the same address in the same clock.
+// If this happens, we want the write data to be forwarded to the reader.
+wire coll = (rd_line == wr_line) && rd_en && wr_en;
+reg coll_q;
+ic_tag_entry_t  wt_data, int_rd_data;
+
+always @(posedge clk)
+    if (!rst_n) begin
+        coll_q <= 0;
+    end else begin
+        coll_q <= coll;
+    end
+    
+assign rd_data = coll_q ? wt_data : int_rd_data;
+
 case (IMPL)
 BEHAVIORAL: begin
 
 ic_tag_entry_t  t_ram[LINES];
 
 always @(posedge clk)
-    if (rst_n) begin
+    if (!rst_n) begin
+        wt_data <= '0;
+    end else begin
+        wt_data <= wr_data;
         if (wr_en)
             t_ram[wr_line] <= wr_data;
         if (rd_en)
-            rd_data <= t_ram[rd_line];
+            int_rd_data <= t_ram[rd_line];
     end
 
 end
 GOWIN: begin
-
-wire [15:0] wr_tap = wr_data;
-wire [15:0] rd_tap = rd_data;
-wire coll = (rd_line == wr_line) && rd_en && wr_en;
-reg coll_q;
-ic_tag_entry_t  wt_data, int_rd_data;
-
-always @(posedge clk)
-    if (!rst_n)
-        coll_q <= 0;
-    else
-        coll_q <= coll;
 
     // Write port: 256 x 16
     // Read port: 256 x 16
@@ -79,8 +86,6 @@ always @(posedge clk)
         .DIB('0),
         .DOB(int_rd_data)
     );
-
-assign rd_data = coll_q ? wt_data : int_rd_data;
 
 end
 default: begin
