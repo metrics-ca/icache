@@ -7,6 +7,21 @@ import tb_icache_pkg::*;
 wire            clk;
 reg             rst_n;
 
+reg             sch_ic_go;
+reg [26:1]      sch_ic_pc;
+
+logic [2:0]     ic_cpu_ctx_q3;
+logic [26:1]    ic_cpu_pc_q3;
+logic [31:0]    ic_cpu_insn_q3;
+logic           ic_cpu_ctx_en_q3;
+
+logic [4:0]     ic_cpu_ra_n3;    
+logic           ic_cpu_ra_en_n3; 
+logic [4:0]     ic_cpu_rb_n3;   
+logic           ic_cpu_rb_en_n3;
+logic [4:0]     ic_cpu_rd_q3;
+logic           ic_cpu_rd_en_q3;
+
 wire [26:4]     ic_mem_addr;
 wire [1:0]      ic_mem_xid;
 wire            ic_mem_re;
@@ -20,12 +35,7 @@ assign #5ns clk = (clk === 1'b0);
 ic_fetch_if fetch_if(.*);
 dram_ctrl_if dram_if(.*);
 
-ic_top dut(
-    .fetch_addr(fetch_if.fetch_addr),
-    .fetch_en(fetch_if.fetch_en),
-    .fetch_valid(fetch_if.fetch_valid),
-    .fetch_data(fetch_if.fetch_data),
-    .*);
+ic_top dut(.*);
 
 bind ic_ctrl ic_ctrl_cover u_cover(.*);
 
@@ -60,10 +70,44 @@ gowin_ddr_model ddr_model(
 
 initial begin
     rst_n = 1'b0;
-    fetch_if.fetch_en = 1'b0;
     repeat (4) @(posedge clk);
     rst_n <= 1'b1;
 end
+
+// Interim "fake CPU"
+logic [2:0]     ic_cpu_ctx_q4;
+logic [2:0]     ic_cpu_ctx_q5;
+logic [26:1]    ic_cpu_pc_q4;
+logic [26:1]    ic_cpu_pc_q5;
+logic [31:0]    ic_cpu_insn_q4;
+logic [31:0]    ic_cpu_insn_q5;
+logic           ic_cpu_ctx_en_q4;
+logic           ic_cpu_ctx_en_q5;
+logic           start, running, start_ack;
+logic [26:1]    start_pc;
+
+always @(posedge clk) begin
+    ic_cpu_ctx_q4 <= ic_cpu_ctx_q3;     // output of RF
+    ic_cpu_ctx_q5 <= ic_cpu_ctx_q4;     // output of ALU
+    ic_cpu_ctx_en_q4 <= ic_cpu_ctx_en_q3; // output of RF
+    ic_cpu_ctx_en_q5 <= ic_cpu_ctx_en_q4; // output of ALU
+    ic_cpu_insn_q4 <= ic_cpu_insn_q3;   // output of RF
+    ic_cpu_insn_q5 <= ic_cpu_insn_q4;   // output of ALU
+    ic_cpu_pc_q4 <= ic_cpu_pc_q3;       // output of RF
+    ic_cpu_pc_q5 <= ic_cpu_pc_q4;       // output of ALU
+    start_ack <= start & (!ic_cpu_ctx_q5);
+end
+
+wire [1:0]      insn_sz = (ic_cpu_insn_q5[1:0] == 2'b11) ? 2 : 1;
+
+always @*
+    if (start) begin
+        sch_ic_pc = start_pc;
+        sch_ic_go = 1;
+    end else begin
+        sch_ic_pc = ic_cpu_pc_q5 + insn_sz;
+        sch_ic_go = ic_cpu_ctx_en_q5;
+    end
 
 initial begin
     uvm_config_db#(virtual ic_fetch_if)::set(null, "*", "vif", fetch_if);

@@ -7,10 +7,9 @@ module ic_ctrl(
     input                   rst_n,
 
     // Fetch interface from CPU
-    input [26:1]            fetch_addr,
-    input                   fetch_en,
-    output reg [1:0]        fetch_valid,
-    output reg [31:0]       fetch_data,
+    input [26:1]            fetch_addr_n1,
+    input                   fetch_en_n1,
+    output reg [1:0]        fetch_valid_n3,
 
     // Interface to DRAM controller
     output reg [26:4]       ic_mem_addr,
@@ -27,9 +26,7 @@ module ic_ctrl(
     output ic_line_t        wr_line, rd_line,
     output ic_waddr_t       rd_word_even, rd_word_odd,
     output ic_fill_t        wr_data_even,
-    input [15:0]            rd_data_even,
     output ic_fill_t        wr_data_odd,
-    input [15:0]            rd_data_odd,
     
     // Interface to tag RAM 
     output reg [WAYS-1:0]   we_tag,
@@ -60,7 +57,7 @@ always @(posedge clk)
 // Requested address is either 0 or 2 mod 4, due to compressed instructions.
 // We must be able to read 32 bits from either alignment.
 // To this end, we split the data ram into two banks "even" and "odd" based
-// on fetch_addr[1].  Any given 32-bit read will hit both banks.
+// on fetch_addr_n1[1].  Any given 32-bit read will hit both banks.
 // We must then reassemble the data properly.
 // It is possible for a read from address 0xE mod 16 to "straddle".
 // We will return the first 16 bits in this case; CPU must issue another
@@ -74,11 +71,11 @@ ic_waddr_t fetch_word, fetch_word_p1, fetch_word_even, fetch_word_odd;
 wire ic_line_t  fetch_line;
 wire ic_tag_t   fetch_tag;
 
-assign { fetch_tag,fetch_line,fetch_word} = fetch_addr[26:2];
-assign fetch_word_p1 = fetch_word + fetch_addr[1];
+assign { fetch_tag,fetch_line,fetch_word} = fetch_addr_n1[26:2];
+assign fetch_word_p1 = fetch_word + fetch_addr_n1[1];
 
 always_comb begin
-    if (fetch_addr[1]) begin
+    if (fetch_addr_n1[1]) begin
         fetch_word_odd = fetch_word;
         fetch_word_even = fetch_word_p1;
     end else begin
@@ -87,14 +84,14 @@ always_comb begin
     end
 end
 
-wire   straddle = &{fetch_word,fetch_addr[1]};
-assign re_tag = {WAYS{fetch_en & init_done}};
+wire   straddle = &{fetch_word,fetch_addr_n1[1]};
+assign re_tag = {WAYS{fetch_en_n1 & init_done}};
 assign raddr_tag = fetch_line;
 
 // Tag compare
 reg             tag_cmp_en_q1;
 reg             straddle_q1, straddle_q2;
-reg             req_odd_q1, req_odd_q2, req_odd_q3;
+reg             req_odd_q1, req_odd_q2;
 ic_tag_t        fetch_tag_q1;
 ic_line_t       fetch_line_q1;
 ic_waddr_t      fetch_word_even_q1, fetch_word_odd_q1;
@@ -110,18 +107,16 @@ always @(posedge clk)
         straddle_q2 <= 0;
         req_odd_q1 <= 0;
         req_odd_q2 <= 0;
-        req_odd_q3 <= 0;
     end else begin
-        tag_cmp_en_q1 <= fetch_en & init_done;
+        tag_cmp_en_q1 <= fetch_en_n1 & init_done;
         fetch_tag_q1 <= fetch_tag;
         fetch_line_q1 <= fetch_line;
         fetch_word_even_q1 <= fetch_word_even;
         fetch_word_odd_q1 <= fetch_word_odd;
         straddle_q1 <= straddle;
         straddle_q2 <= straddle_q1;
-        req_odd_q1 <= fetch_addr[1];
+        req_odd_q1 <= fetch_addr_n1[1];
         req_odd_q2 <= req_odd_q1;
-        req_odd_q3 <= req_odd_q2;
     end
 
 reg [WAYS-1:0] tag_hit;
@@ -168,24 +163,19 @@ assign rd_line = fetch_line_q1;
 assign rd_word_even = fetch_word_even_q1;
 assign rd_word_odd = fetch_word_odd_q1;
 
-logic       re_data_q;
+logic       re_data_q2;
 
 // Final instruction assembly
 always @(posedge clk) begin
     if (!rst_n) begin
-        fetch_data <= 0;
-        fetch_valid <= 0;
-        re_data_q <= 0;
+        re_data_q2 <= 0;
     end else begin
-        fetch_valid[0] <= re_data_q;
-        fetch_valid[1] <= re_data_q & ~straddle_q2;
-        re_data_q <= re_data;
-        if (req_odd_q2)
-            fetch_data <= {rd_data_even,rd_data_odd};
-        else
-            fetch_data <= {rd_data_odd,rd_data_even};
+        re_data_q2 <= re_data;
     end
 end
+
+assign fetch_valid_n3[0] = re_data_q2;
+assign fetch_valid_n3[1] = re_data_q2 & ~straddle_q2;
 
 // Reads from LRU RAM
 reg     lru_rd_update_en, lru_rd_update_en_q1;
@@ -199,7 +189,7 @@ always_comb begin
         raddr_lru = nxt_tag_wb_line;
         lru_rd_update_en = 0;
         lru_wb_update_en = 1;
-    end else if (fetch_en & init_done) begin
+    end else if (fetch_en_n1 & init_done) begin
         // Update due to data fetch
         re_lru = 1'b1;
         raddr_lru = fetch_line;

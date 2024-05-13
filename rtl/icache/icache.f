@@ -4,4 +4,5 @@ ic_data_ram.sv
 ic_lru_ram.sv
 ic_syn_top.sv
 ic_tag_ram.sv
+ic_decode.sv
 ic_top.sv
