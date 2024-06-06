@@ -32,9 +32,6 @@ source_files:
     path: ../rtl/icache/icache.f
     file_list: relative-to-file
   - language: verilog
-    path: $GOWIN/prim_sim.v
-    library_name: gowin
-  - language: verilog
     path: ../tb/dram_ctrl/dram_ctrl.f
     options: '-uvm 1.2'
     file_list: relative-to-file
@@ -46,5 +43,10 @@ source_files:
     file_list: relative-to-file
   - language: verilog
     path: ../rtl/top/dram_arb.sv
+  - language: verilog
+    path: ../rtl/lib/prim_sim.v
+    library_name: gowin
+  - language: verilog
+    path: ../tb/env/elf_pkg.sv
 library_search_paths:
   - $STD_LIBS/ieee93

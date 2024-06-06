@@ -3,6 +3,8 @@ module tb_ic_top;
 
 import uvm_pkg::*;
 import tb_icache_pkg::*;
+import elf_pkg::*;
+
 
 wire            clk;
 reg             rst_n;
@@ -83,7 +85,7 @@ logic [31:0]    ic_cpu_insn_q4;
 logic [31:0]    ic_cpu_insn_q5;
 logic           ic_cpu_ctx_en_q4;
 logic           ic_cpu_ctx_en_q5;
-logic           start, running, start_ack;
+logic           start, start_ack;
 logic [26:1]    start_pc;
 
 always @(posedge clk) begin
@@ -98,25 +100,64 @@ always @(posedge clk) begin
     start_ack <= start & (!ic_cpu_ctx_q5);
 end
 
-wire [1:0]      insn_sz = (ic_cpu_insn_q5[1:0] == 2'b11) ? 2 : 1;
+logic [1:0]     insn_sz;
+logic           running;
 
-always @*
-    if (start) begin
-        sch_ic_pc = start_pc;
-        sch_ic_go = 1;
+always @* begin
+    if (ic_cpu_ctx_en_q5) begin
+        if (ic_cpu_insn_q5[1:0] == 2'b11)
+            insn_sz = 2;
+        else
+            insn_sz= 1;
+    end else
+        insn_sz = 0;
+end
+
+always @(posedge clk) begin
+    if (!rst_n) begin
+        running <= 0;
+        sch_ic_go <= 0;
+    end else if (ic_cpu_ctx_q5 == 3'b0) begin
+        if (start) begin
+            running <= 1;
+            sch_ic_pc <= start_pc;
+            sch_ic_go <= 1;
+        end else begin
+            sch_ic_pc <= ic_cpu_pc_q5 + insn_sz;
+            sch_ic_go <= running;
+        end
     end else begin
-        sch_ic_pc = ic_cpu_pc_q5 + insn_sz;
-        sch_ic_go = ic_cpu_ctx_en_q5;
+        sch_ic_go <= 0;
     end
+end
 
+/*
 initial begin
     uvm_config_db#(virtual ic_fetch_if)::set(null, "*", "vif", fetch_if);
     uvm_config_db#(virtual dram_ctrl_if)::set(null, "*", "vif", dram_if);
     run_test();
 end
+*/
 
 initial begin
-    #10ms;
+    automatic ElfFile reader = new;
+    automatic bit [63:0] entry;
+
+    start = 0;
+    reader.openFile("$HOME/work/riscv-tests/isa/rv64ui-p-addi");
+    reader.load(ddr_model.elf_if);
+    wait (dut.u_ctrl.init_done == 1);
+    @(posedge clk);
+    start <= 1;
+    entry = reader.get_entry();
+$display("Entry point: %h", entry);
+    start_pc <= entry;
+    repeat (8) @(posedge clk);
+    start <= 0;
+end
+    
+initial begin
+    #5us;
     $display("Watchdog timeout!");
     $finish;
 end

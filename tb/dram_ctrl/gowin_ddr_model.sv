@@ -1,6 +1,8 @@
 // A behavioral model of the Gowin DDR3 memory controller IP+DRAM.
 // Hopefully correct, as the real thing is difficult to simulate.
 // and the controller is not well documented.
+import elf_pkg::*;
+
 module gowin_ddr_model(
     input logic         clk,
     input logic         rst_n,
@@ -19,6 +21,20 @@ module gowin_ddr_model(
 );
 
 logic [127:0]   dram[int];  // indexed by ddr_addr[26:4]
+
+class ElfIf extends ElfMemory;
+    virtual function void   write(u64 addr, bit [7:0] data[]);
+        foreach (data[i]) begin
+            int cur = addr + i;
+            int row = cur[26:4];
+            int col = cur[3:0];
+            dram[row][col*8+:8] = data[i];
+$display("write row %d byte %d = %h", row, col, data[i]);
+        end
+    endfunction
+endclass
+    
+ElfIf elf_if = new;
 
 typedef struct {
     logic [26:4]    addr;

@@ -33,8 +33,8 @@ module ic_decode(
     output logic        ic_cpu_rd_en_q3
 );
 
-localparam IC_GO_STAGE = 6;
-localparam IC_PC_STAGE = 4;
+localparam IC_GO_STAGE = 6; // generated in q6
+localparam IC_PC_STAGE = 6;
 
 logic [2:0]             ctx_q0;         // Context counter for initiation
 logic [7:0]             active_q0;      // Which threads are running?
@@ -68,7 +68,7 @@ assign fetch_addr_n1 = init_pc[ctx_q0];
 assign fetch_en_n1 = active_q0[ctx_q0];
 
 // Deswizzle read data
-wire [2:0]              rd_ctx = ctx_q0 - 3;
+wire [2:0]              rd_ctx = ctx_q0 - 2; // q2 == n3
 wire [26:1]             rd_pc = init_pc[rd_ctx];
 logic [31:0]            insn;
 
