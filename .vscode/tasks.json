@@ -1,0 +1,28 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+     "tasks": [
+        {
+            "label": "Altair Hybrid AWS",
+            "type": "shell",
+            "command": "sim/RUN_TEST_AWS.csh",
+            "args": ["${input:number_of_random_tests}"],
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "new"
+            }
+        }
+    ],
+    "inputs": [
+        {
+            "id": "number_of_random_tests",
+            "type": "promptString",
+            "description": "Enter the the number of random tests to run.",
+            "default": "100"
+        }
+    ]
+}
