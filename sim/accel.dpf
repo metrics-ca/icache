@@ -27,6 +27,8 @@ simulations:
     options: >-
       -image image -uvm 1.2 -waves ic.mxd +UVM_TESTNAME=ic_typical_test
       +threads=4 +trans=100 +UVM_MAX_QUIT_COUNT=5
+  - name: elab_single
+    options: '-top work.tb_ic_top  -separate-unit-scopes  -uvm 1.2 +acc+b -L gowin -j 8'
 source_files:
   - language: verilog
     path: ../rtl/icache/icache.f
@@ -48,5 +50,9 @@ source_files:
     library_name: gowin
   - language: verilog
     path: ../tb/env/elf_pkg.sv
+  - language: verilog
+    path: ../rtl/cpu/rf.sv
+  - language: verilog
+    path: ../tb/icache/ic_ctrl_cover.sv
 library_search_paths:
   - $STD_LIBS/ieee93
