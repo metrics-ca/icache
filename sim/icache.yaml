@@ -18,6 +18,10 @@ tasks:
       working:
         - name: work-dsim_work
           path: sim/dsim_work/
+        - name: sim-logs
+          path: sim/logs/
+        - name: sim-waves
+          path: sim/waves/
       artifacts:
         - name: elab_log
           path: sim/elab.log
@@ -37,3 +41,29 @@ tasks:
           path: sim/single_test.log
         - name: single_test-mxd
           path: sim/single_test.mxd
+  - name: typical-test
+    mdc_work: sim
+    depends:
+      - elab-ic-top
+    fanout:
+      name: threads
+      type: sequence
+      from: 1
+      to: 8
+    commands:
+      - dsim -image image -uvm 1.2 -waves waves/typical_test_$(fanout.threads).mxd
+        +UVM_TESTNAME=ic_typical_test -l logs/typical_test_$(fanout.threads).log +threads=$(fanout.threads)
+    inputs:
+      working:
+        - name: elab-ic-top.work-dsim_work
+          path: sim/dsim_work/
+        - name: elab-ic-top.sim-logs
+          path: sim/logs/
+        - name: elab-ic-top.sim-waves
+          path: sim/waves/
+    outputs:
+      artifacts:
+        - name: typical_test-logs
+          path: sim/logs/
+        - name: typical_test-waves
+          path: sim/waves/
