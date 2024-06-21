@@ -1,0 +1,39 @@
+
+# Automatically Generated From elab_ic_top
+name: accel
+tasks:
+  - name: elab-ic-top
+    mdc_work: sim
+    commands:
+      - dvlcom -F ../rtl/icache/icache.f
+      - dvlcom -uvm 1.2 -F ../tb/dram_ctrl/dram_ctrl.f
+      - dvlcom ../tb/icache/tb_ic_top.sv
+      - dvlcom -uvm 1.2 -F ../tb/icache/tb_icache.f
+      - dvlcom ../rtl/top/dram_arb.sv
+      - dvlcom ../tb/icache/ic_ctrl_cover.sv
+      - >-
+        dsim -top work.tb_ic_top -genimage image -separate-unit-scopes  -uvm 1.2
+        +acc+b -L gowin -j 8 -l elab.log
+    outputs:
+      working:
+        - name: work-dsim_work
+          path: sim/dsim_work/
+      artifacts:
+        - name: elab_log
+          path: sim/elab.log
+  - name: single-test
+    mdc_work: sim
+    depends:
+      - elab-ic-top
+    commands:
+      - dsim -image image -uvm 1.2 -waves single_test.mxd +UVM_TESTNAME=ic_single_test -l single_test.log
+    inputs:
+      working:
+        - name: elab-ic-top.work-dsim_work
+          path: sim/dsim_work/
+    outputs:
+      artifacts:
+        - name: single_test-log
+          path: sim/single_test.log
+        - name: single_test-mxd
+          path: sim/single_test.mxd
