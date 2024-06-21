@@ -31,6 +31,10 @@ simulations:
     options: >-
       -image image -uvm 1.2 -waves ic.mxd +UVM_TESTNAME=ic_typical_test
       +threads=8 +trans=100 +UVM_MAX_QUIT_COUNT=5
+  - name: elab_typical_test
+    options: >-
+      -top work.tb_ic_top -separate-unit-scopes  -uvm 1.2 +acc+b -L gowin -j 8
+      -waves ic.mxd +UVM_TESTNAME=ic_typical_test
 source_files:
   - language: verilog
     path: ../rtl/icache/icache.f
